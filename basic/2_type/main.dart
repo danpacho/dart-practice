@@ -1,3 +1,5 @@
+// ignore_for_file: unused_local_variable
+
 void main() {
   // bool 타입은 true or false
   bool isTrue = 1 > 2;

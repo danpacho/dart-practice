@@ -1,3 +1,5 @@
+// ignore_for_file: unused_local_variable
+
 void main() {
   // dynamic 변수
   // 타입이 계속 변경되어도 상관 없음
