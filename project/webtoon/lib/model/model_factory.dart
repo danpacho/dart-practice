@@ -5,23 +5,30 @@ enum Status {
   filled,
 }
 
-class ModelSetter {
-  set(JsonMap jsonMap) {}
+abstract class Model<ModelType> {
+  void set(JsonMap jsonMap) {}
+  ModelType create();
 }
 
 const String nullish = "NULLISH";
 
 /// ### Step1 Define model class
 ///
-/// implements `ModelSetter`
+/// implements `Model`
 /// `get` method is logic of saving data
 /// ```dart
-/// class ExampleModel implements ModelSetter {
+/// class ExampleModel implements Model<ExampleModel> {
 ///   int id = 0;
 ///
 ///   @override
 ///   get(json){
 ///     id = json["id"];
+///   }
+///
+///   ///create instance
+///   @override
+///   create(){
+///     return ModelSetter();
 ///   }
 /// }
 /// ```
@@ -29,7 +36,7 @@ const String nullish = "NULLISH";
 /// ### Step2 Define model instance
 ///
 /// ```dart
-/// final dataList = GetModel(ExampleModel());
+/// final dataList = ModelFactory(ExampleModel());
 /// ```
 /// ---
 /// ### Step3 Transform to models
@@ -50,7 +57,7 @@ const String nullish = "NULLISH";
 /// print(dataList.data[0].id);
 /// // 2
 /// ```
-class ModelFactory<ModelType extends ModelSetter> {
+class ModelFactory<ModelType extends Model> {
   Status status = Status.unfilled;
   final ModelType model;
   final List<ModelType> data = [];
@@ -76,17 +83,22 @@ class ModelFactory<ModelType extends ModelSetter> {
         (json) {
           final modelKeys = (json as JsonMap).keys.toList();
 
-          final jsonMap = modelKeys.fold({}, (previousValue, key) {
-            if (json[key] != null) {
-              previousValue[key] = json[key];
+          final jsonMap = modelKeys.fold(
+            {},
+            (previousValue, key) {
+              if (json[key] != null) {
+                previousValue[key] = json[key];
+                return previousValue;
+              }
+              previousValue[key] = nullish;
               return previousValue;
-            }
-            previousValue[key] = nullish;
-            return previousValue;
-          });
+            },
+          );
 
-          model.set(jsonMap);
-          return model;
+          final ModelType newModel = model.create();
+          newModel.set(jsonMap);
+
+          return newModel;
         },
       ).toList();
 
