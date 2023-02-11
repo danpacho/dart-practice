@@ -1,29 +1,41 @@
-import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:webtoon/services/api_response.dart';
 
 class ApiService {
   final String baseUrl;
-
+  final ApiResponse apiResponse = ApiResponse();
   ApiService({
     required this.baseUrl,
   });
 
-  Future<List<dynamic>?> fetch({
-    String? endpoint,
+  String _addRoutePath(dynamic endPoint) {
+    switch (endPoint.runtimeType) {
+      case String:
+        return "/$endPoint";
+      case List<String>:
+        return (endPoint as List<String>).fold(
+          "",
+          (acc, curr) => "$acc/$curr",
+        );
+      default:
+        return endPoint;
+    }
+  }
+
+  Future<dynamic> fetch<T>({
+    T? endpoint,
   }) async {
     final Uri parsedUri =
-        Uri.parse('$baseUrl${endpoint != null ? '/$endpoint' : ''}');
-
+        Uri.parse('$baseUrl${endpoint != null ? _addRoutePath(endpoint) : ''}');
     try {
-      final response = await http.get(parsedUri);
-      if (response.statusCode == 200) {
-        final List<dynamic> res = jsonDecode(response.body);
-        return res;
-      }
-      return Future(() => null);
+      apiResponse.handleResponse(
+        response: await http.get(parsedUri),
+      );
+
+      return apiResponse.data;
     } catch (e) {
-      print(e); // throw ErrorDescription(e.toString());
-      return Future(() => null);
+      print("ERROR in api_service $e");
+      throw Error();
     }
   }
 }
