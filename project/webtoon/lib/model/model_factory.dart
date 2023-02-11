@@ -1,16 +1,14 @@
-typedef JsonMap = Map<dynamic, dynamic>;
+typedef JsonMap = Map<String, dynamic>;
 
-enum Status {
-  unfilled,
-  filled,
+enum TransformStatus {
+  unTransformed,
+  transformed,
 }
 
 abstract class Model<ModelType> {
   void set(JsonMap jsonMap) {}
   ModelType create();
 }
-
-const String nullish = "NULLISH";
 
 /// ### Step1 Define model class
 ///
@@ -57,52 +55,74 @@ const String nullish = "NULLISH";
 /// print(dataList.data[0].id);
 /// // 2
 /// ```
-class ModelFactory<ModelType extends Model> {
-  Status status = Status.unfilled;
+class ModelFactory<ModelType extends Model<ModelType>> {
+  static const String nullish = "NULLISH";
+
+  TransformStatus status = TransformStatus.unTransformed;
   final ModelType model;
-  final List<ModelType> data = [];
+  final List<ModelType> dataList = [];
+  ModelType get data {
+    return dataList[0];
+  }
 
   ModelFactory(this.model);
 
-  _updateStatus() {
-    if (data.isNotEmpty) {
-      status = Status.filled;
+  void _updateStatus() {
+    if (dataList.isNotEmpty) {
+      status = TransformStatus.transformed;
     } else {
-      status = Status.unfilled;
+      status = TransformStatus.unTransformed;
     }
   }
 
-  _updateData(List<ModelType> modelList) {
-    if (modelList.isEmpty == false) data.addAll(modelList);
+  void _updateDataList(List<ModelType> modelList) {
+    if (modelList.isEmpty == false) dataList.addAll(modelList);
   }
 
-  /// transform `List<Json>` to `List<Model>`
-  void transform(List<dynamic>? jsonList) {
-    if (jsonList != null) {
-      final List<ModelType> modelList = jsonList.map(
-        (json) {
-          final modelKeys = (json as JsonMap).keys.toList();
+  /// create `ModelType` instance from `Json`
+  ModelType _createModelInstance(dynamic json) {
+    final modelKeys = (json as JsonMap).keys.toList();
 
-          final jsonMap = modelKeys.fold(
-            {},
-            (previousValue, key) {
-              if (json[key] != null) {
-                previousValue[key] = json[key];
-                return previousValue;
-              }
-              previousValue[key] = nullish;
-              return previousValue;
-            },
-          );
+    final jsonMap = modelKeys.fold<JsonMap>(
+      {},
+      (accJsonMap, key) {
+        if (json[key] != null) {
+          accJsonMap[key] = json[key];
+          return accJsonMap;
+        }
+        accJsonMap[key] = nullish;
+        return accJsonMap;
+      },
+    );
 
-          final ModelType newModel = model.create();
-          newModel.set(jsonMap);
+    final ModelType modelInstance = model.create();
+    modelInstance.set(jsonMap);
 
-          return newModel;
-        },
-      ).toList();
+    return modelInstance;
+  }
 
-      _updateData(modelList);
+  /// transform `JsonMap` to `ModelType`
+  void transformJson(Map<String, dynamic>? jsonMap) {
+    if (jsonMap != null) {
+      print(_createModelInstance(jsonMap));
+      _updateDataList(
+        [_createModelInstance(jsonMap)],
+      );
+    }
+
+    _updateStatus();
+  }
+
+  /// transform `List<JsonMap>` to `List<ModelType>`
+  void transformJsonList(List<dynamic>? jsonMapList) {
+    if (jsonMapList != null) {
+      final List<ModelType> modelList = jsonMapList
+          .map(
+            (json) => _createModelInstance(json),
+          )
+          .toList();
+
+      _updateDataList(modelList);
     }
 
     _updateStatus();
