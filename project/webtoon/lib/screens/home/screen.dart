@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:webtoon/common/widgets/page_scaffold.dart';
+import 'package:webtoon/common/widgets/screen_layout.dart';
 import 'package:webtoon/common/widgets/webtoon_card.dart';
 import 'package:webtoon/model/model_factory.dart';
 import 'package:webtoon/model/webtoon_model.dart';
