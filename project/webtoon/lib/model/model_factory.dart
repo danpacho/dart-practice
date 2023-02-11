@@ -10,7 +10,7 @@ abstract class Model<ModelType> {
   ModelType create();
 }
 
-/// ### Step1 Define model class
+/// ### 1. Define model class
 ///
 /// implements `Model`
 /// `get` method is logic of saving data
@@ -20,24 +20,23 @@ abstract class Model<ModelType> {
 ///
 ///   @override
 ///   get(json){
-///     id = json["id"];
+///     id = int.parse(json["id"]);
 ///   }
-///
-///   ///create instance
+///   /// create instance
 ///   @override
 ///   create(){
-///     return ModelSetter();
+///     return ExampleModel();
 ///   }
 /// }
 /// ```
 /// ---
-/// ### Step2 Define model instance
+/// ### 2. Define model instance typed data
 ///
 /// ```dart
 /// final dataList = ModelFactory(ExampleModel());
 /// ```
 /// ---
-/// ### Step3 Transform to models
+/// ### 3. Transform json list to model list
 ///
 /// Get `json` list
 ///   ```dart
@@ -48,12 +47,14 @@ abstract class Model<ModelType> {
 ///   dataList.transform(exampleJsonList);
 ///   ```
 /// ---
-/// ### Step4 Access data
+/// ### 4. Access data
 ///
-/// Access transformed model with `data` property
+/// Access transformed model with `data(jsonMap)` or `dataList(list of jsonMap)` property
 /// ```dart
 /// print(dataList.data[0].id);
 /// // 2
+/// print(data.id);
+/// // 3213
 /// ```
 class ModelFactory<ModelType extends Model<ModelType>> {
   static const String nullish = "NULLISH";
