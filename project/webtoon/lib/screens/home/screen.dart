@@ -1,48 +1,94 @@
 import 'package:flutter/material.dart';
+import 'package:webtoon/common/widgets/page_scaffold.dart';
+import 'package:webtoon/common/widgets/webtoon_card.dart';
 import 'package:webtoon/model/model_factory.dart';
 import 'package:webtoon/model/webtoon_model.dart';
-import 'package:webtoon/services/api_service.dart';
+import 'package:webtoon/router/app_router.dart';
+import 'package:webtoon/services/webtoon_service.dart';
 
-class Home extends StatelessWidget {
-  Home({super.key});
-
-  final webtoonService = ApiService(
-    baseUrl: "https://webtoon-crawler.nomadcoders.workers.dev",
-  );
+class HomeScreen extends StatelessWidget {
+  HomeScreen({super.key});
 
   final todayWebtoon = ModelFactory(WebtoonModel());
 
+  ListView renderWebtoonList(
+    AsyncSnapshot<List<WebtoonModel>> snapshot,
+  ) {
+    return ListView.separated(
+      separatorBuilder: (context, index) => const SizedBox(width: 20),
+      scrollDirection: Axis.horizontal,
+      itemCount: snapshot.data!.length,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: 10,
+      ),
+      itemBuilder: (context, index) {
+        final webtoon = snapshot.data![index];
+
+        return WebtoonCard(
+          size: 300,
+          webtoon: webtoon,
+          onTap: () {
+            AppRouter.move(
+              context: context,
+              to: AppRoutePath.detail,
+              routingProps: webtoon,
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "툰보고",
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.green,
-        elevation: 0,
-      ),
-      backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          ElevatedButton(
-            onPressed: () async {
-              final resList = await webtoonService.fetch(
-                endpoint: "today",
-              );
-              todayWebtoon.transform(resList);
-            },
-            child: Text(
-              todayWebtoon.status == Status.filled
-                  ? todayWebtoon.data[2].id
-                  : "unfilled",
-            ),
-          ),
-        ],
+    return ScreenLayout(
+      pageTitle: "웹툰보구",
+      body: FutureBuilder(
+        future: (() async {
+          todayWebtoon.transformJsonList(
+            await WebtoonService.getTodayWebtoon(),
+          );
+          return todayWebtoon.dataList;
+        })(),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return Column(
+              children: [
+                const Text("오늘의 웹툰"),
+                Expanded(
+                    child: ListView.separated(
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 20),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: snapshot.data!.length,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  itemBuilder: (context, index) {
+                    final webtoon = snapshot.data![index];
+
+                    return WebtoonCard(
+                      size: 300,
+                      webtoon: webtoon,
+                      onTap: () {
+                        AppRouter.move(
+                          context: context,
+                          to: AppRoutePath.detail,
+                          routingProps: webtoon,
+                        );
+                      },
+                    );
+                  },
+                )),
+              ],
+            );
+          }
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        },
       ),
     );
   }
